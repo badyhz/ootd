@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>五行衣橱 OOTD</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Hiragino Sans GB", sans-serif;
+            --transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* 动态主题变量 */
+        :root {
+            --theme-gradient-1: #ff9a9e;
+            --theme-gradient-2: #fecfef;
+            --theme-accent: #ff6b6b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: #f5f5f7;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            transition: background 1s ease;
+        }
+
+        /* 动态背景动画 */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--theme-gradient-1), var(--theme-gradient-2), #fff0f0);
+            background-size: 400% 400%;
+            z-index: -1;
+            animation: gradientMove 15s ease infinite;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 浮动的装饰球 */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 10s infinite ease-in-out;
+        }
+        .orb-1 { width: 300px; height: 300px; top: -50px; left: -50px; background: var(--theme-gradient-1); }
+        .orb-2 { width: 200px; height: 200px; bottom: 10%; right: -50px; background: var(--theme-gradient-2); animation-delay: -5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.1); }
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s forwards 0.2s;
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 头部设计 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .brand {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        /* 语言切换按钮 */
+        .lang-switch {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            margin-left: 10px;
+        }
+
+        .lang-opt {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 16px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .lang-opt.active {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* 日期选择器样式 */
+        .date-picker-wrapper {
+            position: relative;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-right: auto; 
+            margin-left: 15px;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s;
+        }
+
+        .date-picker-wrapper:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .date-picker-input {
+            border: none;
+            background: transparent;
+            font-family: var(--font-main);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            outline: none;
+            width: 125px; 
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .hero-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hero-main-text {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #1d1d1f, #4a4a4a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        
+        /* New Duty God Badge */
+        .duty-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .hero-sub {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            max-width: 90%;
+            margin: 0 auto;
+            line-height: 1.4;
+        }
+
+        /* 卡片通用样式 */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--glass-shadow);
+            transition: var(--transition);
+        }
+        
+        .glass-card:active {
+            transform: scale(0.98);
+        }
+
+        /* Bento Grid */
+        .outfit-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .grid-item {
+            position: relative;
+            overflow: hidden;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .grid-item.large {
+            grid-column: span 2;
+            min-height: 200px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+        }
+
+        .tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(0,0,0,0.5);
+            margin-bottom: 8px;
+        }
+
+        .color-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .color-meaning {
+            font-size: 13px;
+            opacity: 0.7;
+            line-height: 1.4;
+        }
+
+        .color-blob {
+            position: absolute;
+            right: -20px;
+            bottom: -20px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+        
+        .grid-item:hover .color-blob {
+            transform: scale(1.1);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 4px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Forecast */
+        .forecast-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .forecast-item {
+            display: flex;
+            flex-direction: column;
+            padding: 16px 20px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255,255,255,0.3);
+            gap: 10px;
+        }
+
+        .forecast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .forecast-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .forecast-date {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .forecast-color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 6px;
+            vertical-align: middle;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+        }
+        
+        .footer-note {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.6;
+            margin-bottom: 10px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 85%;
+            max-width: 400px;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .modal-overlay.open .modal-content {
+            transform: scale(1);
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand" data-i18n="appTitle">DAILY CHIC · 五行</div>
+            <!-- 日期选择器 -->
+            <div class="date-picker-wrapper">
+                <input type="date" id="datePicker" class="date-picker-input">
+            </div>
+            <div class="lang-switch" onclick="toggleLanguage()">
+                <div class="lang-opt active" id="btnCN">中</div>
+                <div class="lang-opt" id="btnEN">EN</div>
+            </div>
+        </header>
+
+        <!-- Hero: 随 Tab 切换而变化 -->
+        <section class="hero-section">
+            <div class="hero-title" id="heroLabel" data-i18n="todayVibe">Today's Vibe</div>
+            <div class="hero-main-text" id="elementTitle">Loading...</div>
+            
+            <!-- Duty God Badge -->
+            <div class="duty-badge" id="dutyBadge">--</div>
+            
+            <div class="hero-sub" id="luckyNote">Align your energy</div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tabTodayBtn" onclick="switchTab('today')" data-i18n="tabToday">Today</button>
+            <button class="tab-btn" onclick="switchTab('tomorrow')" data-i18n="tabTomorrow">Tomorrow</button>
+            <button class="tab-btn" onclick="switchTab('forecast')" data-i18n="tabForecast">Future 3 Days</button>
+        </div>
+
+        <!-- Today Panel -->
+        <div id="today" class="tab-panel active">
+            <!-- Content filled by JS -->
+            <div id="todayContent" class="outfit-grid"></div>
+        </div>
+
+        <!-- Tomorrow Panel -->
+        <div id="tomorrow" class="tab-panel">
+            <!-- Content filled by JS -->
+            <div id="tomorrowContent" class="outfit-grid"></div>
+        </div>
+
+        <!-- Forecast Panel -->
+        <div id="forecast" class="tab-panel">
+            <div class="glass-card">
+                <div style="margin-bottom: 20px; font-weight: 600; font-size: 18px;" data-i18n="futureTitle">Trend Forecast</div>
+                <div class="forecast-list" id="forecastContainer">
+                    <!-- JS Filled -->
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <button style="background:none; border:none; color:#999; font-size:12px; text-decoration:underline; cursor:pointer;" onclick="openModal()" data-i18n="tabPhilosophy">The Logic</button>
+            <div class="footer-note" style="margin-top:10px;" data-i18n="footer">Inspired by Traditional Wisdom · Designed for Modern Life</div>
+        </footer>
+    </div>
+
+    <!-- Modal: About -->
+    <div class="modal-overlay" id="aboutModal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 15px; font-size: 22px;" data-i18n="modalTitle">The Logic</h3>
+            <p style="font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 20px;" id="modalText">
+                本应用融合了中国传统的五行哲学与现代时尚美学。
+                根据每日地支（12天轮回），计算当天的能量属性（环境）。
+                穿戴相生颜色（吉）代表环境生我，办事易成；而相克颜色（凶）则可能带来不必要的阻力。
+            </p>
+            <button onclick="closeModal(null)" style="width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 12px; font-weight: 600; font-size: 16px;" data-i18n="btnGotIt">Got it</button>
+        </div>
+    </div>
+
+    <!-- Background Elements -->
+    <div class="ambient-bg"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <script>
+        // --- 1. 双语配置 (I18n Config) ---
+        let currentLang = 'zh'; // 'zh' or 'en'
+        let selectedDate = new Date(); // 当前选择的日期
+
+        const translations = {
+            zh: {
+                appTitle: 'DAILY CHIC · 五行',
+                todayVibe: '气场指南', 
+                tomorrowVibe: '明日趋势',
+                luckyNote: '顺应天时，能量加持',
+                tabToday: '今日指南', 
+                tabTomorrow: '次日预告',
+                tabForecast: '未来走势',
+                tabPhilosophy: '原理解析',
+                tagBest: '大吉 · 环境生我',
+                tagSec: '次吉 · 比肩',
+                tagWealth: '招财 · 我克环境',
+                tagTired: '较累 · 我生环境', 
+                tagAvoid: '不宜 · 环境克我',
+                descBest: '大环境生你，办事易成，开心轻松',
+                descSec: '与人合作共分利益',
+                descWealth: '做事较累，但能得到收获',
+                descTired: '你去生大环境，消耗精力但有收获', 
+                descAvoid: '大环境克你，万事成效差',
+                futureTitle: '未来三天趋势',
+                footer: '传统智慧 · 现代美学',
+                modalTitle: '五行与穿搭',
+                modalText: '本应用融合了中国传统的五行哲学与现代时尚美学。<br><br>每日地支代表“大环境”的五行属性。<br><strong>最吉</strong>：环境生我（如水日穿绿，水生木），轻松顺遂。<br><strong>招财</strong>：我克环境（如水日穿黄，土克水），付出有回报。<br><strong>不宜</strong>：环境克我（如水日穿红，水克火），阻力较大。',
+                btnGotIt: '知道了',
+                elementNames: { '水': '水日', '火': '火日', '木': '木日', '金': '金日', '土': '土日' },
+                months: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                dutyPrefix: '值神'
+            },
+            en: {
+                appTitle: 'ELEMENTAL OOTD',
+                todayVibe: "Selected Vibe",
+                tomorrowVibe: "Next Day Vibe",
+                luckyNote: 'Align your energy flow',
+                tabToday: 'Today',
+                tabTomorrow: 'Next Day',
+                tabForecast: 'Next 3 Days',
+                tabPhilosophy: 'Philosophy',
+                tagBest: 'Best · Support',
+                tagSec: 'Good · Harmony',
+                tagWealth: 'Wealth · Control',
+                tagTired: 'Tired · Output', 
+                tagAvoid: 'Avoid · Clash',
+                descBest: 'Env feeds You. Easy & Happy.',
+                descSec: 'Cooperation & Sharing.',
+                descWealth: 'Hard work brings wealth.',
+                descTired: 'You feed Env. Tiring but rewarding.', 
+                descAvoid: 'Env clashes You. Resistance.',
+                futureTitle: 'Trend Forecast',
+                footer: 'Ancient Wisdom · Modern Life',
+                modalTitle: 'The Logic',
+                modalText: 'Based on the 12-day Earthly Branch cycle.<br><br>The day represents the <strong>Environment</strong>.<br>Your clothes represent <strong>You</strong>.<br><strong>Best</strong>: Env feeds You (Support).<br><strong>Wealth</strong>: You control Env (Gains).<br><strong>Avoid</strong>: Env controls You (Resistance).',
+                btnGotIt: 'Got it',
+                elementNames: { '水': 'Water Day', '火': 'Fire Day', '木': 'Wood Day', '金': 'Metal Day', '土': 'Earth Day' },
+                months: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
+                dutyPrefix: 'Duty God'
+            }
+        };
+
+        // --- 2. 数据源 (Data Source) ---
+        const COLORS = {
+            green_cyan: { zh: '青色 & 绿色', en: 'Cyan & Green', hex: 'linear-gradient(135deg, #4CAF50, #00BCD4)' },
+            black_blue: { zh: '黑色 & 深蓝', en: 'Black & Blue', hex: 'linear-gradient(135deg, #000000, #1565C0)' },
+            yellow_caramel: { zh: '黄色 & 焦糖', en: 'Yellow & Caramel', hex: 'linear-gradient(135deg, #FFC107, #795548)' },
+            white_silver: { zh: '白色 & 银色', en: 'White & Silver', hex: 'linear-gradient(135deg, #FFFFFF, #B0BEC5)' },
+            red_purple: { zh: '红色 & 紫色', en: 'Red & Purple', hex: 'linear-gradient(135deg, #F44336, #9C27B0)' },
+            red_pink: { zh: '红色 & 粉色', en: 'Red & Pink', hex: 'linear-gradient(135deg, #F44336, #E91E63)' },
+            gold_light: { zh: '金色 & 浅色', en: 'Gold & Light', hex: 'linear-gradient(135deg, #FFD700, #F5F5F5)' },
+            black: { zh: '黑色', en: 'Black', hex: 'linear-gradient(135deg, #000000, #424242)' },
+            green: { zh: '绿色', en: 'Green', hex: 'linear-gradient(135deg, #4CAF50, #81C784)' },
+            white: { zh: '白色', en: 'White', hex: 'linear-gradient(135deg, #FFFFFF, #E0E0E0)' },
+            yellow: { zh: '黄色', en: 'Yellow', hex: 'linear-gradient(135deg, #FFEB3B, #FBC02D)' }
+        };
+
+        // Added 'duty' field to each branch
+        const earthlyBranches = {
+            '亥': {
+                element: '水',
+                theme: { g1: '#a1c4fd', g2: '#c2e9fb', accent: '#2193b0' }, 
+                duty: { zh: '福德', en: 'Fortune' },
+                favorable: COLORS.green_cyan,
+                secondary: COLORS.black_blue,
+                wealth: COLORS.yellow_caramel,
+                tired: COLORS.white_silver,
+                avoid: COLORS.red_purple
+            },
+            '子': {
+                element: '水',
+                theme: { g1: '#accbee', g2: '#e7f0fd', accent: '#4facfe' },
+                duty: { zh: '白虎', en: 'White Tiger' },
+                favorable: COLORS.green_cyan,
+                secondary: COLORS.black_blue,
+                wealth: COLORS.yellow_caramel,
+                tired: COLORS.white_silver,
+                avoid: COLORS.red_purple
+            },
+            '丑': {
+                element: '土',
+                theme: { g1: '#e6dee9', g2: '#dad4ec', accent: '#654ea3' },
+                duty: { zh: '龙德', en: 'Dragon Virtue' },
+                favorable: COLORS.white_silver,
+                secondary: COLORS.yellow_caramel,
+                wealth: COLORS.green_cyan,
+                tired: COLORS.red_pink,
+                avoid: COLORS.black_blue
+            },
+            '寅': {
+                element: '木',
+                theme: { g1: '#d4fc79', g2: '#96e6a1', accent: '#84fab0' },
+                duty: { zh: '吊客', en: 'Condolence' },
+                favorable: COLORS.red_purple,
+                secondary: COLORS.green_cyan,
+                wealth: COLORS.gold_light,
+                tired: COLORS.black_blue,
+                avoid: COLORS.yellow
+            },
+            '卯': {
+                element: '木',
+                theme: { g1: '#84fab0', g2: '#8fd3f4', accent: '#43e97b' },
+                duty: { zh: '病符', en: 'Sickness' },
+                favorable: COLORS.red_purple,
+                secondary: COLORS.green_cyan,
+                wealth: COLORS.gold_light,
+                tired: COLORS.black_blue,
+                avoid: COLORS.yellow
+            },
+            '辰': {
+                element: '土',
+                theme: { g1: '#fdfbfb', g2: '#ebedee', accent: '#a8edea' },
+                duty: { zh: '值符', en: 'Official' },
+                favorable: COLORS.white_silver,
+                secondary: COLORS.yellow_caramel,
+                wealth: COLORS.green_cyan,
+                tired: COLORS.red_pink,
+                avoid: COLORS.black_blue
+            },
+            '巳': {
+                element: '火',
+                theme: { g1: '#fa709a', g2: '#fee140', accent: '#ff0844' }, 
+                duty: { zh: '太阳', en: 'The Sun' },
+                favorable: COLORS.yellow_caramel,
+                secondary: COLORS.red_purple,
+                wealth: COLORS.black,
+                tired: COLORS.green,
+                avoid: COLORS.white
+            },
+            '午': {
+                element: '火',
+                theme: { g1: '#ff9a9e', g2: '#fecfef', accent: '#f6d365' },
+                duty: { zh: '伤符', en: 'Injury' },
+                favorable: COLORS.yellow_caramel,
+                secondary: COLORS.red_purple,
+                wealth: COLORS.black,
+                tired: COLORS.green,
+                avoid: COLORS.white
+            },
+            '未': {
+                element: '土',
+                theme: { g1: '#a18cd1', g2: '#fbc2eb', accent: '#a6c1ee' },
+                duty: { zh: '太阴', en: 'The Moon' },
+                favorable: COLORS.white_silver,
+                secondary: COLORS.yellow_caramel,
+                wealth: COLORS.green_cyan,
+                tired: COLORS.red_pink,
+                avoid: COLORS.black_blue
+            },
+            '申': {
+                element: '金',
+                theme: { g1: '#e0c3fc', g2: '#8ec5fc', accent: '#E0C3FC' }, 
+                duty: { zh: '官符', en: 'Lawsuit' },
+                favorable: COLORS.black_blue,
+                secondary: COLORS.white_silver,
+                wealth: COLORS.red_pink,
+                tired: COLORS.yellow_caramel,
+                avoid: COLORS.green_cyan
+            },
+            '酉': {
+                element: '金',
+                theme: { g1: '#cfd9df', g2: '#e2ebf0', accent: '#a1c4fd' },
+                duty: { zh: '死符', en: 'Death Charm' },
+                favorable: COLORS.black_blue,
+                secondary: COLORS.white_silver,
+                wealth: COLORS.red_pink,
+                tired: COLORS.yellow_caramel,
+                avoid: COLORS.green_cyan
+            },
+            '戌': {
+                element: '土',
+                theme: { g1: '#fccb90', g2: '#d57eeb', accent: '#e092a5' },
+                duty: { zh: '破碎', en: 'Broken' },
+                favorable: COLORS.white_silver,
+                secondary: COLORS.yellow_caramel,
+                wealth: COLORS.green_cyan,
+                tired: COLORS.red_pink,
+                avoid: COLORS.black_blue
+            }
+        };
+
+        const branchesArray = ['亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌'];
+        const referenceDate = new Date('2025-10-21T00:00:00'); 
+        const referenceBranch = '亥';
+
+        // --- 核心逻辑 ---
+
+        // 计算两个日期相差的天数
+        function getDaysDiff(date1, date2) {
+            const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate());
+            const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate());
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor((d1 - d2) / oneDay);
+        }
+
+        function getBranchForDate(date) {
+            const daysDiff = getDaysDiff(date, referenceDate);
+            const referenceIndex = branchesArray.indexOf(referenceBranch);
+            // 处理负数取模
+            const currentIndex = ((referenceIndex + daysDiff) % 12 + 12) % 12;
+            return branchesArray[currentIndex];
+        }
+
+        function formatDate(date) {
+            // ISO format for date picker input: YYYY-MM-DD
+            return date.toISOString().split('T')[0];
+        }
+        
+        function formatDisplayDate(date) {
+            const m = date.getMonth();
+            const d = date.getDate();
+            if (currentLang === 'zh') {
+                return `${translations.zh.months[m]} ${d}日`;
+            } else {
+                return `${translations.en.months[m]} ${d}`;
+            }
+        }
+        
+        function formatShortDate(date) {
+            // Format M.D like 11.30
+            return `${date.getMonth()+1}.${date.getDate()}`;
+        }
+
+        // --- I18n 逻辑 ---
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            const btnCN = document.getElementById('btnCN');
+            const btnEN = document.getElementById('btnEN');
+            if (currentLang === 'zh') {
+                btnCN.classList.add('active');
+                btnEN.classList.remove('active');
+            } else {
+                btnCN.classList.remove('active');
+                btnEN.classList.add('active');
+            }
+            updateUI();
+        }
+
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+
+        // --- UI 更新逻辑 ---
+
+        let currentActiveTab = 'today';
+
+        // 初始化日期选择器监听
+        document.getElementById('datePicker').addEventListener('change', function(e) {
+            if(e.target.value) {
+                selectedDate = new Date(e.target.value);
+                updateUI();
+            }
+        });
+
+        function updateUI() {
+            // 同步日期选择器的值
+            const picker = document.getElementById('datePicker');
+            picker.value = formatDate(selectedDate);
+
+            // 1. Update static text (except Tab Today which is dynamic)
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (key === 'modalText') el.innerHTML = t(key);
+                else if (key !== 'tabToday') el.innerText = t(key);
+            });
+
+            // Update Tab Today Text with Date hint
+            const tabBtn = document.getElementById('tabTodayBtn');
+            if (currentLang === 'zh') {
+                tabBtn.innerText = `${t('tabToday')} ${formatShortDate(selectedDate)}`;
+            } else {
+                tabBtn.innerText = t('tabToday');
+            }
+
+            // 选中的日期（Today View）
+            const viewToday = new Date(selectedDate);
+            // 选中的日期的明天（Tomorrow View）
+            const viewTomorrow = new Date(selectedDate);
+            viewTomorrow.setDate(selectedDate.getDate() + 1);
+
+            // 2. Determine which data to show in Hero based on active Tab
+            let heroDate = viewToday;
+            if (currentActiveTab === 'tomorrow') {
+                heroDate = viewTomorrow;
+                document.getElementById('heroLabel').innerText = t('tomorrowVibe');
+            } else {
+                document.getElementById('heroLabel').innerText = t('todayVibe');
+            }
+
+            const branch = getBranchForDate(heroDate);
+            const data = earthlyBranches[branch];
+
+            // 3. Update Hero styling
+            const root = document.documentElement;
+            root.style.setProperty('--theme-gradient-1', data.theme.g1);
+            root.style.setProperty('--theme-gradient-2', data.theme.g2);
+            root.style.setProperty('--theme-accent', data.theme.accent);
+
+            const elementStr = translations[currentLang].elementNames[data.element];
+            const titleText = currentLang === 'zh' ? `${branch} · ${elementStr}` : `${elementStr} Energy`;
+            document.getElementById('elementTitle').innerText = titleText;
+            document.getElementById('elementTitle').style.backgroundImage = data.favorable.hex;
+
+            // Update Duty Badge
+            const dutyText = `${translations[currentLang].dutyPrefix} · ${data.duty[currentLang]}`;
+            document.getElementById('dutyBadge').innerText = dutyText;
+
+            // 4. Render Content
+            renderGuideContent(viewToday, 'todayContent');
+            renderGuideContent(viewTomorrow, 'tomorrowContent');
+            renderForecast(viewToday);
+        }
+
+        function renderGuideContent(date, containerId) {
+            const branch = getBranchForDate(date);
+            const data = earthlyBranches[branch];
+            const container = document.getElementById(containerId);
+            
+            // Re-generate HTML for the grid 
+            container.innerHTML = `
+                <!-- Row 1: Best Color (Large) -->
+                <div class="glass-card grid-item large">
+                    <div>
+                        <div class="tag" style="color:#2e7d32;">${t('tagBest')}</div>
+                        <div class="color-name">${data.favorable[currentLang]}</div>
+                        <div class="color-meaning">${t('descBest')}</div>
+                    </div>
+                    <div class="color-blob" style="background:${data.favorable.hex}"></div>
+                </div>
+
+                <!-- Row 2: Secondary (Small) -->
+                <div class="glass-card grid-item">
+                    <div>
+                        <div class="tag">${t('tagSec')}</div>
+                        <div class="color-name" style="font-size: 18px;">${data.secondary[currentLang]}</div>
+                        <div class="color-meaning">${t('descSec')}</div>
+                    </div>
+                    <div class="color-blob" style="background:${data.secondary.hex}"></div>
+                </div>
+
+                <!-- Row 2: Wealth (Small) -->
+                <div class="glass-card grid-item">
+                    <div>
+                        <div class="tag" style="color:#f57f17;">${t('tagWealth')}</div>
+                        <div class="color-name" style="font-size: 18px;">${data.wealth[currentLang]}</div>
+                        <div class="color-meaning">${t('descWealth')}</div>
+                    </div>
+                    <div class="color-blob" style="background:${data.wealth.hex}"></div>
+                </div>
+
+                <!-- Row 3: Tired (Small) -->
+                <div class="glass-card grid-item" style="min-height: 140px;">
+                    <div>
+                        <div class="tag" style="color:#9c27b0;">${t('tagTired')}</div>
+                        <div class="color-name" style="font-size: 16px;">${data.tired[currentLang]}</div>
+                        <div class="color-meaning" style="font-size: 12px;">${t('descTired')}</div>
+                    </div>
+                    <div class="color-blob" style="opacity: 0.6; background:${data.tired.hex}; transform: scale(0.8) translate(20px, 20px);"></div>
+                </div>
+
+                <!-- Row 3: Avoid (Small) -->
+                <div class="glass-card grid-item" style="min-height: 140px; background: rgba(255,255,255,0.4);">
+                    <div style="z-index: 2;">
+                        <div class="tag" style="color: #c62828;">${t('tagAvoid')}</div>
+                        <div class="color-name" style="font-size: 16px;">${data.avoid[currentLang]}</div>
+                        <div class="color-meaning" style="font-size: 12px;">${t('descAvoid')}</div>
+                    </div>
+                    <div class="color-blob" style="opacity: 0.3; background:${data.avoid.hex}; transform: scale(0.8) translate(20px, 20px);"></div>
+                </div>
+            `;
+        }
+
+        function renderForecast(today) {
+            const container = document.getElementById('forecastContainer');
+            container.innerHTML = '';
+            
+            // Forecast shows Next 3 days
+            // Now showing Best, Secondary, Wealth
+            for (let i = 1; i <= 3; i++) {
+                const futureDate = new Date(today);
+                futureDate.setDate(today.getDate() + i);
+                const branch = getBranchForDate(futureDate);
+                const data = earthlyBranches[branch];
+                const elementStr = translations[currentLang].elementNames[data.element];
+                let titleStr = currentLang === 'zh' ? `${branch} · ${elementStr}` : `${elementStr}`;
+
+                const item = document.createElement('div');
+                item.className = 'forecast-item';
+                
+                item.innerHTML = `
+                    <div class="forecast-header">
+                        <span class="forecast-date">${formatDisplayDate(futureDate)} <span style="font-weight:400; font-size:12px; color:#666; margin-left:5px;">${titleStr}</span></span>
+                    </div>
+                    <!-- Best -->
+                    <div class="forecast-row" style="margin-bottom:4px;">
+                        <span style="color:#2e7d32; font-weight:600;">${t('tagBest').split('·')[0]}</span>
+                        <div style="display:flex; align-items:center;">
+                            <span>${data.favorable[currentLang]}</span>
+                            <div class="forecast-color-dot" style="background:${data.favorable.hex}"></div>
+                        </div>
+                    </div>
+                    <!-- Secondary -->
+                    <div class="forecast-row" style="margin-bottom:4px;">
+                        <span style="color:#555;">${t('tagSec').split('·')[0]}</span>
+                        <div style="display:flex; align-items:center;">
+                            <span>${data.secondary[currentLang]}</span>
+                            <div class="forecast-color-dot" style="background:${data.secondary.hex}"></div>
+                        </div>
+                    </div>
+                    <!-- Wealth -->
+                    <div class="forecast-row">
+                        <span style="color:#f57f17;">${t('tagWealth').split('·')[0]}</span>
+                        <div style="display:flex; align-items:center;">
+                            <span>${data.wealth[currentLang]}</span>
+                            <div class="forecast-color-dot" style="background:${data.wealth.hex}"></div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            }
+        }
+
+        function switchTab(tabName) {
+            currentActiveTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+
+            updateUI();
+        }
+
+        function openModal() {
+            document.getElementById('aboutModal').classList.add('open');
+        }
+
+        function closeModal(e) {
+            if (!e || e.target.classList.contains('modal-overlay')) {
+                document.getElementById('aboutModal').classList.remove('open');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', function() {
+            // Set initial date picker value
+            document.getElementById('datePicker').value = formatDate(selectedDate);
+            updateUI();
+        });
+
+    </script>
+</body>
+</html>
