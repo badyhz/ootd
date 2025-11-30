@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, jsonify
 import datetime
+# 引入 timedelta 用于计算明天
+from datetime import timedelta
 import requests
 import json
 import os
-# 引入 urllib3 禁用警告，保持日志清爽
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -13,25 +14,26 @@ app = Flask(__name__)
 # ================= 环境变量配置 =================
 TEST_APP_ID = os.environ.get("WX_APP_ID")
 TEST_APP_SECRET = os.environ.get("WX_APP_SECRET")
-TEMPLATE_ID = os.environ.get("WX_TEMPLATE_ID") 
+TEMPLATE_ID = os.environ.get("WX_TEMPLATE_ID") # 【重要】记得换成新的模板ID
 H5_URL = os.environ.get("WX_H5_URL")
 
 _openids = os.environ.get("WX_USER_OPEN_IDS", "")
 USER_OPEN_IDS = [oid.strip() for oid in _openids.split(",") if oid.strip()]
 # ===============================================
 
-# --- 核心五行算法 (标准版) ---
+# --- 核心五行算法 ---
 EARTHLY_BRANCHES = ['亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌']
 REF_DATE = datetime.date(2025, 10, 21) 
 REF_INDEX = 0
 
-def get_today_fortune():
-    today = datetime.date.today()
-    delta = (today - REF_DATE).days
+# 新增：计算指定日期的运势（传入 target_date）
+def get_fortune_by_date(target_date):
+    delta = (target_date - REF_DATE).days
     current_index = (REF_INDEX + delta) % 12
     if current_index < 0: current_index += 12
     branch = EARTHLY_BRANCHES[current_index]
     
+    # 1. 定义色盘
     C = {
         'green_cyan': '绿色 & 青色',
         'black_blue': '黑色 & 深蓝',
@@ -40,12 +42,17 @@ def get_today_fortune():
         'red_purple': '红色 & 紫色',
         'red_pink': '红色 & 粉色',
         'gold_light': '金色 & 浅色',
-        'black': '黑色',
-        'green': '绿色',
-        'white': '白色',
-        'yellow': '黄色'
+        'black': '黑色', 'green': '绿色', 'white': '白色', 'yellow': '黄色'
     }
 
+    # 2. 定义十二神 (值符)
+    DUTY_MAP = {
+        '亥': '福德', '子': '白虎', '丑': '龙德', '寅': '吊客', 
+        '卯': '病符', '辰': '值符', '巳': '太阳', '午': '伤符', 
+        '未': '太阴', '申': '官符', '酉': '死符', '戌': '破碎'
+    }
+
+    # 3. 每日运势映射 [元素, 大吉, 次吉, 招财, 较累, 不宜]
     mapping = {
         '亥': ['水', C['green_cyan'], C['black_blue'], C['yellow_caramel'], C['white_silver'], C['red_purple']],
         '子': ['水', C['green_cyan'], C['black_blue'], C['yellow_caramel'], C['white_silver'], C['red_purple']],
@@ -62,10 +69,12 @@ def get_today_fortune():
     }
     
     data = mapping.get(branch)
+    duty_god = DUTY_MAP.get(branch, "")
     
     return {
-        "date": today.strftime("%Y-%m-%d"),
-        "branch": f"{branch} · {data[0]}日",
+        "date": target_date.strftime("%Y-%m-%d"),
+        "branch": f"{branch} · {data[0]}", # 例如：亥 · 水
+        "duty": duty_god,                   # 新增：福德
         "best": data[1],
         "secondary": data[2],
         "wealth": data[3],
@@ -73,14 +82,12 @@ def get_today_fortune():
         "avoid": data[5]
     }
 
-# --- 微信发送逻辑 (已加入 verify=False) ---
+# --- 微信发送逻辑 ---
 def get_token():
     if not TEST_APP_ID or not TEST_APP_SECRET:
         return None, "环境变量未配置"
-
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={TEST_APP_ID}&secret={TEST_APP_SECRET}"
     try:
-        # 【关键修改】verify=False 跳过 SSL 证书验证
         resp = requests.get(url, verify=False).json()
         if 'access_token' in resp:
             return resp['access_token'], None
@@ -93,15 +100,20 @@ def send_push():
     token, error = get_token()
     if not token: return f"Token获取失败: {error}"
     
-    fortune = get_today_fortune()
+    # 【关键修改】计算明天的日期
+    tomorrow = datetime.date.today() + timedelta(days=1)
+    # 获取明天的运势
+    fortune = get_fortune_by_date(tomorrow)
     
+    # 构造数据包 (新增了 duty 字段)
     data_payload = {
         "template_id": TEMPLATE_ID,
         "url": H5_URL,
         "data": {
-            "date": {"value": fortune['date'], "color": "#666666"},
+            # 在日期后面加个(明日)的提示，更人性化
+            "date": {"value": f"{fortune['date']} (明天)", "color": "#666666"},
             "branch": {"value": fortune['branch'], "color": "#173177"},
-            
+            "duty": {"value": fortune['duty'], "color": "#E65100"},        # 新增：值神 (橙色高亮)
             "best": {"value": fortune['best'], "color": "#2e7d32"},       
             "secondary": {"value": fortune['secondary'], "color": "#1976D2"}, 
             "wealth": {"value": fortune['wealth'], "color": "#F57F17"},   
@@ -119,7 +131,6 @@ def send_push():
     for openid in USER_OPEN_IDS:
         data_payload["touser"] = openid
         try:
-            # 【关键修改】verify=False 跳过 SSL 证书验证
             res = requests.post(url, json=data_payload, verify=False).json()
             results.append(res)
         except Exception as e:
