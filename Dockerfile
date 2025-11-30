@@ -1,6 +1,9 @@
 # 使用官方 Python 基础镜像
 FROM python:3.9-slim
 
+# 【新增】安装系统证书，解决 SSL 报错问题
+RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
+
 # 设置工作目录
 WORKDIR /app
 
@@ -8,11 +11,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制所有代码文件 (包括 templates 文件夹)
+# 复制所有代码文件
 COPY . .
 
 # 暴露端口
 EXPOSE 80
 
-# 启动命令 (使用 gunicorn 启动 Flask，更稳定)
+# 启动命令
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:80", "app:app"]
