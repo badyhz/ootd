@@ -4,22 +4,23 @@ import datetime
 import requests
 import json
 import os
+# 引入 urllib3 禁用警告，保持日志清爽
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 
 # ================= 环境变量配置 =================
-# 这些值都需要在微信云托管后台的“服务设置 -> 环境变量”里填写
 TEST_APP_ID = os.environ.get("WX_APP_ID")
 TEST_APP_SECRET = os.environ.get("WX_APP_SECRET")
 TEMPLATE_ID = os.environ.get("WX_TEMPLATE_ID") 
 H5_URL = os.environ.get("WX_H5_URL")
 
-# 处理 OpenID (支持多个，在环境变量里用英文逗号隔开)
 _openids = os.environ.get("WX_USER_OPEN_IDS", "")
 USER_OPEN_IDS = [oid.strip() for oid in _openids.split(",") if oid.strip()]
 # ===============================================
 
-# --- 核心五行算法 ---
+# --- 核心五行算法 (标准版) ---
 EARTHLY_BRANCHES = ['亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌']
 REF_DATE = datetime.date(2025, 10, 21) 
 REF_INDEX = 0
@@ -31,7 +32,6 @@ def get_today_fortune():
     if current_index < 0: current_index += 12
     branch = EARTHLY_BRANCHES[current_index]
     
-    # 统一定义色盘
     C = {
         'green_cyan': '绿色 & 青色',
         'black_blue': '黑色 & 深蓝',
@@ -46,7 +46,6 @@ def get_today_fortune():
         'yellow': '黄色'
     }
 
-    # 每日运势映射: [元素, 大吉, 次吉, 招财, 较累, 不宜]
     mapping = {
         '亥': ['水', C['green_cyan'], C['black_blue'], C['yellow_caramel'], C['white_silver'], C['red_purple']],
         '子': ['水', C['green_cyan'], C['black_blue'], C['yellow_caramel'], C['white_silver'], C['red_purple']],
@@ -74,14 +73,15 @@ def get_today_fortune():
         "avoid": data[5]
     }
 
-# --- 微信发送逻辑 ---
+# --- 微信发送逻辑 (已加入 verify=False) ---
 def get_token():
     if not TEST_APP_ID or not TEST_APP_SECRET:
         return None, "环境变量未配置"
 
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={TEST_APP_ID}&secret={TEST_APP_SECRET}"
     try:
-        resp = requests.get(url).json()
+        # 【关键修改】verify=False 跳过 SSL 证书验证
+        resp = requests.get(url, verify=False).json()
         if 'access_token' in resp:
             return resp['access_token'], None
         else:
@@ -95,13 +95,13 @@ def send_push():
     
     fortune = get_today_fortune()
     
-    # 构造对应模板的 5 个数据坑位
     data_payload = {
         "template_id": TEMPLATE_ID,
-        "url": H5_URL, # 点击卡片跳转
+        "url": H5_URL,
         "data": {
             "date": {"value": fortune['date'], "color": "#666666"},
             "branch": {"value": fortune['branch'], "color": "#173177"},
+            
             "best": {"value": fortune['best'], "color": "#2e7d32"},       
             "secondary": {"value": fortune['secondary'], "color": "#1976D2"}, 
             "wealth": {"value": fortune['wealth'], "color": "#F57F17"},   
@@ -119,7 +119,8 @@ def send_push():
     for openid in USER_OPEN_IDS:
         data_payload["touser"] = openid
         try:
-            res = requests.post(url, json=data_payload).json()
+            # 【关键修改】verify=False 跳过 SSL 证书验证
+            res = requests.post(url, json=data_payload, verify=False).json()
             results.append(res)
         except Exception as e:
             results.append(str(e))
@@ -129,12 +130,10 @@ def send_push():
 # --- 路由 ---
 @app.route('/')
 def index():
-    # 这一句保证了 H5 依然能正常访问！
     return render_template('index.html')
 
 @app.route('/daily_push')
 def trigger_push():
-    # 云托管定时触发器访问这个接口
     res = send_push()
     return jsonify({"status": "done", "result": res})
 
