@@ -8,13 +8,14 @@ import os
 app = Flask(__name__)
 
 # ================= 环境变量配置 =================
-# 这些值配置在微信云托管后台，代码里不写死，GitHub 上就不会泄露
+# 这些值都需要在微信云托管后台的“服务设置 -> 环境变量”里填写
+# 这样代码上传到 GitHub 也是安全的，不会泄露
 TEST_APP_ID = os.environ.get("WX_APP_ID")
 TEST_APP_SECRET = os.environ.get("WX_APP_SECRET")
-TEMPLATE_ID = os.environ.get("WX_TEMPLATE_ID") 
-H5_URL = os.environ.get("WX_H5_URL")
+TEMPLATE_ID = os.environ.get("WX_TEMPLATE_ID") # 记得填那个有5行内容的新模板ID
+H5_URL = os.environ.get("WX_H5_URL") # 您的 H5 链接
 
-# 处理接收者 OpenID (支持多人，云托管后台用逗号隔开填入)
+# 处理 OpenID (支持多个，在环境变量里用英文逗号隔开)
 _openids = os.environ.get("WX_USER_OPEN_IDS", "")
 USER_OPEN_IDS = [oid.strip() for oid in _openids.split(",") if oid.strip()]
 # ===============================================
@@ -31,7 +32,7 @@ def get_today_fortune():
     if current_index < 0: current_index += 12
     branch = EARTHLY_BRANCHES[current_index]
     
-    # 定义色盘
+    # 统一定义色盘 (与前端保持一致)
     C = {
         'green_cyan': '绿色 & 青色',
         'black_blue': '黑色 & 深蓝',
@@ -78,34 +79,38 @@ def get_today_fortune():
 def get_token():
     if not TEST_APP_ID or not TEST_APP_SECRET:
         print("错误: 环境变量未配置")
-        return None
+        return None, "环境变量未配置"
 
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={TEST_APP_ID}&secret={TEST_APP_SECRET}"
     try:
         resp = requests.get(url).json()
-        return resp.get('access_token')
+        if 'access_token' in resp:
+            return resp['access_token'], None
+        else:
+            return None, f"微信接口报错: {json.dumps(resp)}"
     except Exception as e:
         print(f"Token error: {e}")
-        return None
+        return None, str(e)
 
 def send_push():
-    token = get_token()
-    if not token: return "Token获取失败"
+    token, error = get_token()
+    if not token: return f"Token获取失败: {error}"
     
     fortune = get_today_fortune()
     
-    # 构造数据包 (对应模板里的 {{key.DATA}})
+    # 构造对应模板的 5 个数据坑位
     data_payload = {
         "template_id": TEMPLATE_ID,
-        "url": H5_URL,
+        "url": H5_URL, # 点击卡片跳转
         "data": {
             "date": {"value": fortune['date'], "color": "#666666"},
             "branch": {"value": fortune['branch'], "color": "#173177"},
-            "best": {"value": fortune['best'], "color": "#2e7d32"},       
-            "secondary": {"value": fortune['secondary'], "color": "#1976D2"}, 
-            "wealth": {"value": fortune['wealth'], "color": "#F57F17"},   
-            "tired": {"value": fortune['tired'], "color": "#9C27B0"},     
-            "avoid": {"value": fortune['avoid'], "color": "#c62828"}      
+            
+            "best": {"value": fortune['best'], "color": "#2e7d32"},       # 绿
+            "secondary": {"value": fortune['secondary'], "color": "#1976D2"}, # 蓝
+            "wealth": {"value": fortune['wealth'], "color": "#F57F17"},   # 金/橙
+            "tired": {"value": fortune['tired'], "color": "#9C27B0"},     # 紫
+            "avoid": {"value": fortune['avoid'], "color": "#c62828"}      # 红
         }
     }
     
@@ -133,6 +138,7 @@ def index():
 
 @app.route('/daily_push')
 def trigger_push():
+    # 云托管定时触发器访问这个接口
     res = send_push()
     return jsonify({"status": "done", "result": res})
 
